@@ -14,34 +14,21 @@ class Product:
             "ProductPurchasePrice": self.purchase_price
         }
 
-class Client:
-    def __init__(self, name, email, shipping_address, phone):
+class SupplierClient:
+    def __init__(self, name, email, shipping_address, phone, type):
         self.name = name
         self.email = email
         self.shipping_address = shipping_address
         self.phone = phone
+        self.type = type
 
     def to_json(self):
         return {
-            'Name': self.name,
-            'Email': self.email,
-            'Address': self.shipping_address,
-            'Phone': self.phone
-        }
-
-class Supplier:
-    def __init__(self, name, email, shipping_address, phone):
-        self.name = name
-        self.email = email
-        self.shipping_address = shipping_address
-        self.phone = phone
-
-    def to_json(self):
-        return {
-            'Name': self.name,
-            'Email': self.email,
-            'Address': self.shipping_address,
-            'Phone': self.phone
+            "SupplierClientName": self.name,
+            "SupplierClientEmail": self.email,
+            "SupplierClientShippingAddress1": self.shipping_address,
+            "SupplierClientPhone1": self.phone,
+            "SupplierClientType": self.type
         }
 
 class InventoryLocation:
@@ -52,7 +39,7 @@ class InventoryLocation:
 
     def to_json(self):
         return {
-            'Abbreviation': self.abbreviation,
-            'Name': self.name,
-            'Address': self.address
+            "InventoryLocationAbbreviation": self.abbreviation,
+            "InventoryLocationName": self.name,
+            "InventoryLocationAddress": self.address
         }

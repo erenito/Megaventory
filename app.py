@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify
-from models import Product, Client, Supplier, InventoryLocation
+from models import Product, SupplierClient, InventoryLocation
 import requests
 
 API_URL = "https://api.megaventory.com/v2017a/"
-API_KEY = "cf2ed6cf718d3664@m146528"
+API_KEY = "73be77e07a6b3446@m146528"
 
 app = Flask(__name__)
 
@@ -17,22 +17,40 @@ def insert_product():
     json_to_send = {
         "APIKEY": API_KEY,
         "mvProduct": product.to_json(),
-        "mvRecordAction": "Insert",
-        "mvInsertUpdateDeleteSourceApplication": "WooCommerce"
+        "mvRecordAction": "Insert"
     }
     
     response = requests.post(API_URL + "Product/ProductUpdate", json=json_to_send)
     
     response_json = response.json()
     
-    print("Response status code:", response.status_code)
-    print("Response JSON:", response.json())
-    
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
         return jsonify({"message": "Product inserted successfully!", "data": response_json}), 200
     else:
         return jsonify({"message": "Failed to insert the product.", "error": response_json}), 400
-    
 
+@app.route('/insert_client_supplier', methods=['POST'])
+def insert_client_supplier():
+    
+    json_body = request.get_json()
+    
+    supplier_client = SupplierClient(json_body["SupplierClientName"], json_body["SupplierClientEmail"], json_body["SupplierClientShippingAddress1"], json_body["SupplierClientPhone1"], json_body["SupplierClientType"])
+    
+    json_to_send = {
+        "APIKEY": API_KEY,
+        "mvSupplierClient": supplier_client.to_json(),
+        "mvRecordAction": "Insert"
+    }
+    
+    response = requests.post(API_URL + "SupplierClient/SupplierClientUpdate", json=json_to_send)
+    
+    response_json = response.json()
+    
+    if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
+        return jsonify({"message": f'{json_body["SupplierClientType"]} inserted successfully!', "data": response_json}), 200
+    else:
+        return jsonify({"message": f'Failed to insert the {json_body["SupplierClientType"]}', "error": response_json}), 400
+
+        
 if __name__ == '__main__':
     app.run(debug=True)
