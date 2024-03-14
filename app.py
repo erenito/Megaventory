@@ -3,7 +3,7 @@ from models import Product, SupplierClient, InventoryLocation
 import requests
 
 API_URL = "https://api.megaventory.com/v2017a/"
-API_KEY = "73be77e07a6b3446@m146528"
+API_KEY = "fd0b3d806ef57f63@m146528"
 
 app = Flask(__name__)
 
@@ -25,9 +25,9 @@ def insert_product():
     response_json = response.json()
     
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
-        return jsonify({"message": "Product inserted successfully!", "data": response_json}), 200
+        return jsonify({"message": "Product inserted successfully!"}), 200
     else:
-        return jsonify({"message": "Failed to insert the product.", "error": response_json}), 400
+        return jsonify({"message": "Failed to insert the product."}), 400
 
 @app.route('/insert_client_supplier', methods=['POST'])
 def insert_client_supplier():
@@ -47,10 +47,31 @@ def insert_client_supplier():
     response_json = response.json()
     
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
-        return jsonify({"message": f'{json_body["SupplierClientType"]} inserted successfully!', "data": response_json}), 200
+        return jsonify({"message": f'{json_body["SupplierClientType"]} inserted successfully!'}), 200
     else:
-        return jsonify({"message": f'Failed to insert the {json_body["SupplierClientType"]}', "error": response_json}), 400
+        return jsonify({"message": f'Failed to insert the {json_body["SupplierClientType"]}'}), 400
 
+@app.route('/insert_inventory_location', methods=['POST'])
+def insert_inventory_location():
+    
+    json_body = request.get_json()
+    
+    inventory_location = InventoryLocation(json_body["InventoryLocationAbbreviation"], json_body["InventoryLocationName"], json_body["InventoryLocationAddress"])
+    
+    json_to_send = {
+        "APIKEY": API_KEY,
+        "mvInventoryLocation": inventory_location.to_json(),
+        "mvRecordAction": "Insert"
+    }
+    
+    response = requests.post(API_URL + "InventoryLocation/InventoryLocationUpdate", json=json_to_send)
+    
+    response_json = response.json()
+    
+    if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
+        return jsonify({"message": "Inventory Location inserted successfully!"}), 200
+    else:
+        return jsonify({"message": "Failed to insert the Inventory Location!"}), 400
         
 if __name__ == '__main__':
     app.run(debug=True)
