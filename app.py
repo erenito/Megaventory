@@ -25,9 +25,9 @@ def insert_product():
     response_json = response.json()
     
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
-        return jsonify({"message": "Product inserted successfully!"}), 200
+        return jsonify({"message": "Product inserted successfully!", "data": response_json}), 200
     else:
-        return jsonify({"message": "Failed to insert the product."}), 400
+        return jsonify({"message": "Failed to insert the product!"}), 400
 
 @app.route('/insert_client_supplier', methods=['POST'])
 def insert_client_supplier():
@@ -47,9 +47,9 @@ def insert_client_supplier():
     response_json = response.json()
     
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
-        return jsonify({"message": f'{json_body["SupplierClientType"]} inserted successfully!'}), 200
+        return jsonify({"message": f'{json_body["SupplierClientType"]} inserted successfully!', "data": response_json}), 200
     else:
-        return jsonify({"message": f'Failed to insert the {json_body["SupplierClientType"]}'}), 400
+        return jsonify({"message": f'Failed to insert the {json_body["SupplierClientType"]}!'}), 400
 
 @app.route('/insert_inventory_location', methods=['POST'])
 def insert_inventory_location():
@@ -69,9 +69,32 @@ def insert_inventory_location():
     response_json = response.json()
     
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
-        return jsonify({"message": "Inventory Location inserted successfully!"}), 200
+        return jsonify({"message": "Inventory Location inserted successfully!", "data": response_json}), 200
     else:
         return jsonify({"message": "Failed to insert the Inventory Location!"}), 400
-        
+
+@app.route('/product_client_relation', methods=['POST'])
+def product_client_relation():
+    
+    json_body = request.get_json()
+    
+    json_to_send = {
+        "APIKEY": API_KEY,
+        "mvProductClientUpdate": {
+            "ProductID": json_body["ProductID"],
+            "ProductClient": json_body["ProductClient"],
+            },
+        "mvRecordAction": "Insert"
+    }
+    
+    response = requests.post(API_URL + "ProductClient/ProductClientUpdate", json=json_to_send)
+    
+    response_json = response.json()
+    
+    if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
+        return jsonify({"message": "Product-Client relation inserted successfully!", "data": response_json}), 200
+    else:
+        return jsonify({"message": "Failed to insert the Product-Client relation!"}), 400
+
 if __name__ == '__main__':
     app.run(debug=True)
