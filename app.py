@@ -3,7 +3,7 @@ from models import Product, SupplierClient, InventoryLocation
 import requests
 
 API_URL = "https://api.megaventory.com/v2017a/"
-API_KEY = "fd0b3d806ef57f63@m146528"
+API_KEY = "31a57112c429fd8e@m146528"
 
 app = Flask(__name__)
 
@@ -27,7 +27,7 @@ def insert_product():
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
         return jsonify({"message": "Product inserted successfully!", "data": response_json}), 200
     else:
-        return jsonify({"message": "Failed to insert the product!"}), 400
+        return jsonify({"message": "Failed to insert the product!", "data": response_json}), 400
 
 @app.route('/insert_client_supplier', methods=['POST'])
 def insert_client_supplier():
@@ -49,7 +49,7 @@ def insert_client_supplier():
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
         return jsonify({"message": f'{json_body["SupplierClientType"]} inserted successfully!', "data": response_json}), 200
     else:
-        return jsonify({"message": f'Failed to insert the {json_body["SupplierClientType"]}!'}), 400
+        return jsonify({"message": f'Failed to insert the {json_body["SupplierClientType"]}!', "data": response_json}), 400
 
 @app.route('/insert_inventory_location', methods=['POST'])
 def insert_inventory_location():
@@ -71,18 +71,71 @@ def insert_inventory_location():
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
         return jsonify({"message": "Inventory Location inserted successfully!", "data": response_json}), 200
     else:
-        return jsonify({"message": "Failed to insert the Inventory Location!"}), 400
+        return jsonify({"message": "Failed to insert the Inventory Location!", "data": response_json}), 400
+    
+
+@app.route('/get_product', methods=['GET'])
+def get_product():
+    
+    json_body = request.get_json()
+    
+    json_to_send = {
+        "APIKEY": API_KEY,
+        "Filters": [
+            {
+            "FieldName": "ProductSKU",
+            "SearchOperator": "Equals",
+            "SearchValue": json_body["ProductSKU"]
+            }
+        ],
+        "ReturnTopNRecords": 1
+    }
+    
+    response = requests.post(API_URL + "Product/ProductGet", json=json_to_send)
+    
+    response_json = response.json()
+    
+    return response_json["mvProducts"][0]
+
+
+@app.route('/get_client_supplier', methods=['GET'])
+def get_client_supplier():
+        
+    json_body = request.get_json()
+    
+    json_to_send = {
+        "APIKEY": API_KEY,
+        "Filters": [
+            {
+            "FieldName": "SupplierClientName",
+            "SearchOperator": "Equals",
+            "SearchValue": json_body["SupplierClientName"]
+            }
+        ]
+    }
+    
+    response = requests.post(API_URL + "SupplierClient/SupplierClientGet", json=json_to_send)
+    
+    response_json = response.json()
+    
+    return response_json["mvSupplierClients"][0]
 
 @app.route('/product_client_relation', methods=['POST'])
 def product_client_relation():
     
     json_body = request.get_json()
     
+    product_id = requests.get('http://127.0.0.1:5000/get_product', json={"ProductSKU": json_body["ProductSKU"]}).json()["ProductID"]
+    
+    sup_client_id = requests.get('http://127.0.0.1:5000/get_client_supplier', json={"SupplierClientName": json_body["SupplierClientName"]}).json()["SupplierClientID"]
+    
+    print(product_id, sup_client_id)
+    
     json_to_send = {
         "APIKEY": API_KEY,
         "mvProductClientUpdate": {
-            "ProductID": json_body["ProductID"],
-            "ProductClient": json_body["ProductClient"],
+            "ProductID": product_id,
+            "ProductClientID": sup_client_id,
             },
         "mvRecordAction": "Insert"
     }
@@ -94,7 +147,7 @@ def product_client_relation():
     if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
         return jsonify({"message": "Product-Client relation inserted successfully!", "data": response_json}), 200
     else:
-        return jsonify({"message": "Failed to insert the Product-Client relation!"}), 400
+        return jsonify({"message": "Failed to insert the Product-Client relation!", "data": response_json}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
