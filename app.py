@@ -120,6 +120,29 @@ def get_client_supplier():
     
     return response_json["mvSupplierClients"][0]
 
+@app.route('/get_inventory_location', methods=['GET'])
+def get_inventory_location():
+        
+    json_body = request.get_json()
+        
+    json_to_send = {
+        "APIKEY": API_KEY,
+        "Filters": [
+            {
+            "FieldName": "InventoryLocationAbbreviation",
+            "SearchOperator": "Equals",
+            "SearchValue": json_body["InventoryLocationAbbreviation"]
+            }
+        ],
+        "ReturnTopNRecords": 1
+    }
+    
+    response = requests.post(API_URL + "InventoryLocation/InventoryLocationGet", json=json_to_send)
+    
+    response_json = response.json()
+    
+    return response_json["mvInventoryLocations"][0]
+
 @app.route('/product_client_relation', methods=['POST'])
 def product_client_relation():
     
@@ -149,5 +172,60 @@ def product_client_relation():
     else:
         return jsonify({"message": "Failed to insert the Product-Client relation!", "data": response_json}), 400
 
+@app.route('/product_supplier_relation', methods=['POST'])
+def product_supplier_relation():
+    
+    json_body = request.get_json()
+    
+    product_id = requests.get('http://127.0.0.1:5000/get_product', json={"ProductSKU": json_body["ProductSKU"]}).json()["ProductID"]
+    
+    sup_client_id = requests.get('http://127.0.0.1:5000/get_client_supplier', json={"SupplierClientName": json_body["SupplierClientName"]}).json()["SupplierClientID"]
+    
+    json_to_send = {
+        "APIKEY": API_KEY,
+        "mvProductSupplierUpdate": {
+            "ProductID": product_id,
+            "ProductSupplierID": sup_client_id,
+            },
+        "mvRecordAction": "Insert"
+    }
+    
+    response = requests.post(API_URL + "ProductSupplier/ProductSupplierUpdate", json=json_to_send)
+    
+    response_json = response.json()
+    
+    if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
+        return jsonify({"message": "Product-Supplier relation inserted successfully!", "data": response_json}), 200
+    else:
+        return jsonify({"message": "Failed to insert the Product-Supplier relation!", "data": response_json}), 400
+
+
+@app.route('/product_inventory_location_relation', methods=['POST'])
+def product_inventory_location_relation():
+    
+    json_body = request.get_json()
+
+    inventory_location_id = requests.get('http://127.0.0.1:5000/get_inventory_location', json={"InventoryLocationAbbreviation": json_body["InventoryLocationAbbreviation"]}).json()["InventoryLocationID"]
+
+    json_to_send = {
+        "APIKEY": API_KEY,
+        "mvProductStockUpdateList": [
+            {
+            "ProductSKU": product_sku["ProductSKU"],
+            "ProductQuantity": json_body["ProductQuantity"],
+            "InventoryLocationID": inventory_location_id
+            } for product_sku in json_body["ProductSKUs"]
+        ] 
+    }
+    
+    response = requests.post(API_URL + "InventoryLocationStock/ProductStockUpdate", json=json_to_send)
+    
+    response_json = response.json()
+    
+    if 'ResponseStatus' in response_json and response_json['ResponseStatus']['ErrorCode'] == '0':
+        return jsonify({"message": "Product-Inventory Location relation inserted successfully!", "data": response_json}), 200
+    else:
+        return jsonify({"message": "Failed to insert the Product-Inventory Location relation!", "data": response_json}), 400
+    
 if __name__ == '__main__':
     app.run(debug=True)
