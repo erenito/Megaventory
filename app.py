@@ -3,7 +3,7 @@ from models import Product, SupplierClient, InventoryLocation
 import requests
 
 API_URL = "https://api.megaventory.com/v2017a/"
-API_KEY = "31a57112c429fd8e@m146528"
+API_KEY = "YOUR_API_KEY"
 
 app = Flask(__name__)
 
